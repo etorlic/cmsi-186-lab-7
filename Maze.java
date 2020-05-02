@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.joining;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Maze {
@@ -28,10 +29,68 @@ public class Maze {
      * of the factory methods fromString, fromFile, or fromScanner.
      */
     private Maze(String[] lines) {
-        // TODO: Fill this in. There is a lot to check for! The maze must be
-        // perfectly rectanglar, not contain any illegal characters, have exactly
-        // one rat (not less, not more), and have exactly one cheese (not less,
-        // not more).
+        var isRectangle = true;
+        var containsIllegalChars = false;
+        var ratCounter = 0;
+        var cheeseCounter = 0;
+        for (var r = 0; r < lines.length; r++) {
+            if (lines[0].length() != lines[r].length()){
+                isRectangle = false;
+            } 
+            if (!lines[r].contains("o")
+                || !lines[r].contains("w") 
+                || !lines[r].contains("r")
+                || !lines[r].contains("c")) {
+                containsIllegalChars = true;
+            }
+            if (lines[r].contains("r")) {
+                ratCounter++;
+            }
+            if (lines[r].contains("c")) {
+                cheeseCounter++;
+            }
+        } if (!isRectangle) {
+            throw new IllegalArgumentException("Non-rectangular maze");
+        } if (containsIllegalChars) {
+            throw new IllegalArgumentException("No illegal characters");
+        } if (ratCounter != 1 && ratCounter != 0) {
+            throw new IllegalArgumentException("Maze can only have one rat");
+        } if (ratCounter == 0) {
+            throw new IllegalArgumentException("Maze has no rat");
+        } if (cheeseCounter != 1 && cheeseCounter != 0) {
+            throw new IllegalArgumentException("Maze can only have one cheese");
+        } if (cheeseCounter == 0) {
+            throw new IllegalArgumentException("Maze has no cheese");
+        }
+
+        var ratRow = -1;
+        var ratColumn = -1;
+        var cheeseRow = -1;
+        var cheeseColumn = -1;
+        cells = new Cell[lines.length][lines[0].length()];
+        for (var r = 0; r < cells.length; r++) {
+            for (var c = 0; c < cells[r].length; c++) {
+                if (lines[r].substring(c, c + 1) == "o") {
+                    cells[r][c] = Maze.Cell.OPEN;
+                } if (lines[r].substring(c, c + 1) == "w") {
+                    cells[r][c] = Maze.Cell.WALL;
+                } if (lines[r].substring(c, c + 1) == "r") {
+                    cells[r][c] = Maze.Cell.RAT;
+                } if (lines[r].substring(c, c + 1) == "c") {
+                    cells[r][c] = Maze.Cell.CHEESE;
+                }
+
+                if(cells[r][c].toString().contains("r")) {
+                    ratRow = r;
+                    ratColumn = c;
+                } if (cells[r][c].toString().contains("c")) {
+                    cheeseRow = r;
+                    cheeseColumn = c;
+                }
+            }
+        }
+        initialRatLocation = new Location(ratRow, ratColumn);
+        initialCheeseLocation = new Location(ratRow, ratColumn);
     }
 
     public static Maze fromString(final String description) {
@@ -43,10 +102,11 @@ public class Maze {
     }
 
     public static Maze fromScanner(final Scanner scanner) {
-        // TODO: Fill this in. You will want to read line-by-line from the scanner
-        // storing each line in an array of strings, then turn the list into
-        // an array and pass that to the Maze constructor. Return the newly
-        // constructed maze from this method.
+        String[] lines;
+        while (scanner.hasNextLine()) {
+            lines = scanner.nextLine().split("\\s");
+        }
+        return new Maze(lines);
     }
 
     /**
@@ -60,39 +120,48 @@ public class Maze {
         private final int column;
 
         Location(final int row, final int column) {
-            // TODO: Fill this in, it's pretty easy.
+            this.row = row;
+            this.column = column;
         }
 
         boolean isInMaze() {
-            // TODO: Fill this in. Return whether the row and column is a legal
-            // position in this maze.
+            if (row > getHeight() || row < 0 || column > getWidth() || column < 0) {
+                return false;
+            } else {
+                return true;
+            }
         }
 
         boolean canBeMovedTo() {
-            // TODO: Fill this in. You can move to a space only if it is inside the
-            // maze and the cell is open or contains the cheese.
+            if ((contents().toString().contains("o") || hasCheese()) && isInMaze()) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         boolean hasCheese() {
-            // TODO: Fill this in. Returns whether the cell has the cheese. You can
-            // use the contents() method to help you here.
+            if (contents().toString().contains("c")) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         Location above() {
-            // TODO: Fill this in. It should return a new location whose coordinates
-            // are (1) the row above this location's row, and (2) the same column.
+            return new Location(row - 1, column);
         }
 
         Location below() {
-            // TODO: Fill this in. Return the location directly below this one.
+            return new Location(row + 1, column);
         }
 
         Location toTheLeft() {
-            // TODO: Fill this in. Return the location directly to the left of this one.
+            return new Location(row, column - 1);
         }
 
         Location toTheRight() {
-            // TODO: Fill this in. Return the location directly to the right of this one.
+            return new Location(row, column + 1);
         }
 
         void place(Cell cell) {
@@ -104,8 +173,7 @@ public class Maze {
         }
 
         boolean isAt(final Location other) {
-            // TODO: Fill this in. Returns whether this location and the other location have
-            // the same row and column values.
+            return contents().equals(other);
         }
     }
 
@@ -115,10 +183,23 @@ public class Maze {
      * to be part of a dead end.
      */
     public static enum Cell {
-        OPEN(' '), WALL('\u2588'), TRIED('x'), PATH('.'), RAT('r'), CHEESE('c');
+        OPEN(String.valueOf(' ')), 
+        WALL(String.valueOf('\u2588')), 
+        TRIED(String.valueOf('x')), 
+        PATH(String.valueOf('.')), 
+        RAT(String.valueOf('r')), 
+        CHEESE(String.valueOf('c'));
 
-        // This needs a constructor and a toString method. You might need to do some
-        // research on Java enums.
+        private String cellValue;
+
+        private Cell(String cellValue){
+            this.cellValue = cellValue;
+        }
+
+        public String toString() {
+            return this.cellValue;
+        }
+
     }
 
     public interface MazeListener {
@@ -126,20 +207,19 @@ public class Maze {
     }
 
     public int getWidth() {
-        // TODO: Fill this in. The information comes from the cells array.
+        return cells[0].length;
     }
 
     public int getHeight() {
-        // TODO: Fill this in
+        return cells.length;
     }
 
     public Location getInitialRatPosition() {
-        // TODO: Fill this in. It is a typical getter, since you already have a field
-        // for the initial rat position.
+        return initialRatLocation;
     }
 
     public Location getInitialCheesePosition() {
-        // TODO: Fill this in
+        return initialCheeseLocation;
     }
 
     /**
