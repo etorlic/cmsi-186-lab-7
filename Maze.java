@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.joining;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -103,9 +104,11 @@ public class Maze {
 
     public static Maze fromScanner(final Scanner scanner) {
         String[] lines;
+        List<String> linesList = new ArrayList<String>();
         while (scanner.hasNextLine()) {
-            lines = scanner.nextLine().split("\\s");
+            linesList.add(scanner.nextLine());
         }
+        lines = linesList.toArray(new String[0]);
         return new Maze(lines);
     }
 
