@@ -111,11 +111,11 @@ public class Maze {
         }
         
         boolean canBeMovedTo() {
-            return (contents() == Cell.OPEN || contents() == Cell.CHEESE) && isInMaze();
+            return isInMaze() && (contents() == Cell.OPEN || contents() == Cell.CHEESE);
         }
         
         boolean hasCheese() {
-            return contents() == Cell.CHEESE && isInMaze();
+            return isInMaze() && contents() == Cell.CHEESE;
         }
         
         Location above() {
