@@ -44,10 +44,10 @@ public class BacktrackingMazeSolver {
                 current = current.toTheLeft();
             } else {
                 current.place(Maze.Cell.TRIED);
-                if (path.isEmpty()) {
+                if (path.empty()) {
                     return false;
                 }
-                path.pop();
+                current = path.pop();
             }
         }
     }
